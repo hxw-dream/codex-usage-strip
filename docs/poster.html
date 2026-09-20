@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    background:
+      radial-gradient(720px 420px at 88% -10%, rgba(16,163,127,0.16), transparent 65%),
+      radial-gradient(560px 360px at -6% 110%, rgba(245,158,11,0.07), transparent 60%),
+      linear-gradient(160deg, #101014 0%, #0d0d10 100%);
+    color: #ececf1;
+    position: relative;
+  }
+  /* faint grid */
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(900px 560px at 55% 40%, rgba(0,0,0,0.9), transparent 75%);
+  }
+
+  /* ---------- left column ---------- */
+  .left { position: absolute; left: 60px; top: 64px; width: 420px; }
+  .kicker {
+    display: inline-block; font-size: 12.5px; letter-spacing: 2.5px;
+    color: #10a37f; border: 1px solid rgba(16,163,127,0.45);
+    padding: 4px 12px; border-radius: 999px; margin-bottom: 18px;
+  }
+  h1 { font-size: 46px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.08; }
+  h1 .cn { display: block; font-size: 27px; font-weight: 600; color: #ececf1; margin-top: 10px; }
+  .tagline { margin-top: 14px; font-size: 15px; color: #9b9ba4; line-height: 1.55; }
+  .tagline-en { margin-top: 5px; font-size: 12px; color: #63636d; }
+
+  .chips { margin-top: 34px; }
+  .chip {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 13px; font-size: 13.5px; color: #c9c9d1;
+  }
+  .chip .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #10a37f;
+    box-shadow: 0 0 8px rgba(16,163,127,0.8); flex: none;
+  }
+  .meta { margin-top: 30px; font-size: 12px; color: #63636d; }
+  .meta b { color: #9b9ba4; font-weight: 600; }
+
+  /* ---------- mock window ---------- */
+  .win {
+    position: absolute; right: 56px; top: 96px;
+    width: 700px; height: 428px;
+    background: #1b1b1f; border: 1px solid #2f2f36; border-radius: 12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 4px 18px rgba(0,0,0,0.4);
+    overflow: visible;
+  }
+  .caption {
+    height: 44px; border-radius: 12px 12px 0 0;
+    background: linear-gradient(#2a2a2f, #232327);
+    border-bottom: 1px solid #2f2f36;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .caption .t { font-size: 12px; color: #9b9ba4; }
+  .caption .btns { position: absolute; right: 14px; display: flex; gap: 7px; }
+  .caption .btns i {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #3a3a41; display: block;
+  }
+  .caption .btns i:first-child { background: #10a37f; opacity: .55; }
+
+  .body { padding: 22px 26px; display: flex; flex-direction: column; gap: 14px; }
+  .bubble { border-radius: 10px; background: #26262b; height: 30px; }
+  .bubble.me { background: rgba(16,163,127,0.16); border: 1px solid rgba(16,163,127,0.25); margin-left: 180px; height: 26px; }
+  .w40 { width: 40%; } .w62 { width: 62%; } .w78 { width: 78%; } .w52 { width: 52%; }
+  .spacer { flex: 1; }
+  .input {
+    height: 40px; border-radius: 10px; border: 1px solid #2f2f36;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 10px 0 14px; color: #63636d; font-size: 12px;
+  }
+  .input .send {
+    width: 26px; height: 26px; border-radius: 50%; background: #10a37f;
+    display: flex; align-items: center; justify-content: center;
+    color: #0d0d10; font-size: 14px; font-weight: 700;
+  }
+
+  /* ---------- capsule strip (the real UI) ---------- */
+  .capsule {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    background: #17171a; border: 1px solid #2a2a31; border-radius: 999px;
+    padding: 8px 16px; display: flex; align-items: center; gap: 9px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.55); white-space: nowrap;
+  }
+  .capsule .pct { font-size: 18px; font-weight: 700; color: #10a37f; }
+  .capsule .bar { width: 76px; height: 4px; border-radius: 2px; background: #2f2f36; overflow: hidden; }
+  .capsule .bar i { display: block; height: 100%; width: 62%; background: #10a37f; border-radius: 2px; }
+  .capsule .info { font-size: 11px; color: #9b9ba4; }
+
+  /* hover panel */
+  .connector {
+    position: absolute; top: 51px; left: 50%;
+    width: 1px; height: 26px; background: #2a2a31; transform: translateX(-50%);
+  }
+  .panel {
+    position: absolute; top: 77px; left: 50%; transform: translateX(-50%);
+    background: #17171a; border: 1px solid #2a2a31; border-radius: 12px;
+    padding: 13px 18px; min-width: 236px;
+    box-shadow: 0 18px 44px rgba(0,0,0,0.6);
+  }
+  .panel .row { margin-top: 6px; font-size: 11.5px; color: #9b9ba4; }
+  .panel .row:first-child { margin-top: 0; font-size: 13px; font-weight: 700; color: #ececf1; }
+  .panel .row.dim { color: #63636d; font-size: 10.5px; }
+  .panel .row .ok { color: #10a37f; font-weight: 600; }
+
+  .footnote {
+    position: absolute; right: 60px; bottom: 26px;
+    font-size: 11.5px; color: #63636d;
+  }
+  .footnote b { color: #9b9ba4; }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+
+  <div class="left">
+    <div class="kicker">OPEN SOURCE &middot; WINDOWS</div>
+    <h1>Codex Usage<br>Strip<span class="cn">Codex 用量悬浮条</span></h1>
+    <div class="tagline">吸附在 Codex 桌面端顶栏的实时用量胶囊：<br>剩余额度、重置倒计时、中转余额，一眼可见。</div>
+    <div class="tagline-en">Real-time Codex usage, docked to your window.</div>
+
+    <div class="chips">
+      <div class="chip"><i class="dot"></i>事件驱动逐像素跟随，被盖住时一起被盖住</div>
+      <div class="chip"><i class="dot"></i>官方额度 + cc-switch 多源余额自动适配</div>
+      <div class="chip"><i class="dot"></i>悬停展开详情，失败退避 + 缓存兜底</div>
+      <div class="chip"><i class="dot"></i>最小化隐藏 · 关闭后驻留 30 分钟自退</div>
+    </div>
+    <div class="meta"><b>Python 3.12+</b> &nbsp;·&nbsp; Windows 10/11 &nbsp;·&nbsp; <b>零第三方依赖</b> &nbsp;·&nbsp; 单文件</div>
+  </div>
+
+  <div class="win">
+    <div class="caption">
+      <div class="t">Codex — ChatGPT</div>
+      <div class="btns"><i></i><i></i><i></i></div>
+    </div>
+    <div class="body">
+      <div class="bubble w52"></div>
+      <div class="bubble me w40"></div>
+      <div class="bubble w78"></div>
+      <div class="bubble w62"></div>
+      <div class="spacer"></div>
+      <div class="input"><span>给 Codex 发消息…</span><span class="send">&#10148;</span></div>
+    </div>
+
+    <!-- capsule docked top-center -->
+    <div class="capsule">
+      <span class="pct">62%</span>
+      <span class="bar"><i></i></span>
+      <span class="info">3天4小时后重置 &middot; 周余 58% &middot; $4.50</span>
+    </div>
+    <div class="connector"></div>
+    <div class="panel">
+      <div class="row">ChatGPT &middot; plus</div>
+      <div class="row">主限额剩余 <span class="ok">62%</span></div>
+      <div class="row">重置 3天4小时后 &middot; 周限额剩余 58%</div>
+      <div class="row">credits $4.50</div>
+      <div class="row dim">更新于 0 分钟前 &middot; 每 60s 自动刷新</div>
+      <div class="row dim">Codex Display v2.1.2</div>
+    </div>
+  </div>
+
+  <div class="footnote">右键仅「退出」&nbsp;·&nbsp; 左键循环数据源&nbsp;·&nbsp; <b>绝不写入 Codex / cc-switch 数据</b></div>
+</body>
+</html>

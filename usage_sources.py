@@ -261,20 +261,8 @@ def fetch_named(name: str) -> dict:
             if "deepseek.com" in base:
                 u = fetch_deepseek(base, key)
             elif p["script_path"]:
-                url = base + p["script_path"]
-                data = _http_json(url, {"Authorization": "Bearer " + key})
-                quota = data.get("quota") if isinstance(data.get("quota"), dict) else {}
-                balance = None
-                for src in (data, quota):
-                    if src.get("remaining") is not None:
-                        balance = float(src["remaining"]); break
-                if balance is None:
-                    balance = float(data.get("balance") or 0)
-                unit = str(data.get("unit") or quota.get("unit") or "USD").upper()
-                u = {"protocol": "custom-usage", "currency": "CNY" if unit == "CNY" else "USD",
-                     "balance": round(balance, 4), "total": None, "used": None,
-                     "used_ratio": None, "today_cost": None,
-                     "fetched_at": datetime.now(timezone.utc).isoformat()}
+                # same /v1/usage protocol; reuse the full parser (today_cost etc.)
+                u = fetch_custom_usage(base, key)
             else:
                 u = fetch_relay({"name": name, "base_url": base, "api_key": key})
             u["mode"] = "relay" if u.get("protocol") else u.get("mode")

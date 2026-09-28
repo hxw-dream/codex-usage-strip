@@ -451,7 +451,7 @@ class UsageStrip:
                 rows.append((f"总额  {cur}{u['total']:,.2f}   已用  {cur}{u.get('used') or 0:,.2f}",
                              FG_DIM, False))
             if u.get("today_cost") is not None:
-                rows.append((f"今日  {cur}{u['today_cost']:,.2f}", FG_DIM, False))
+                rows.append((f"今日  {cur}{u['today_cost']:,.2f}", GREEN, False))
             if u.get("protocol"):
                 rows.append((u["protocol"], FG_DIM, False))
         else:

@@ -123,15 +123,22 @@ def load_config(path=CONFIG_PATH) -> dict:
     return cfg
 
 
-def log_crash() -> None:
-    """pythonw has no stderr: append tracebacks to crash.log (capped at 128 KB)."""
+def log_crash(exc_tuple=None) -> None:
+    """pythonw has no stderr: append tracebacks to crash.log (capped at 128 KB).
+
+    Called with the live exception (default) or an explicit (type, value, tb)
+    tuple from Tk's report_callback_exception / threading.excepthook, whose
+    exceptions would otherwise vanish without a console."""
     try:
         import traceback
         if os.path.exists(CRASH_LOG) and os.path.getsize(CRASH_LOG) > 128_000:
             os.remove(CRASH_LOG)
         with open(CRASH_LOG, "a", encoding="utf-8") as f:
             f.write(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}]\n")
-            traceback.print_exc(file=f)
+            if exc_tuple is None:
+                traceback.print_exc(file=f)
+            else:
+                traceback.print_exception(*exc_tuple, file=f)
     except Exception:
         pass
 
@@ -291,6 +298,8 @@ class UsageStrip:
         self.parent_gone = False
         self._quit = False
         self._fetch_busy = False
+        self._refetch_pending = False    # click raced an in-flight fetch
+        self._usage_target = "__active__"  # source the cached usage came from
         self._fail_streak = 0
         self._stale = False
         self._last_error = None
@@ -309,6 +318,9 @@ class UsageStrip:
         self._build_strip()
         self._build_panel()
         self._build_menu()
+        # Route Tk-callback exceptions into crash.log (they never reach the
+        # __main__ handler, and pythonw has no stderr to show them)
+        self.root.report_callback_exception = lambda e, v, t: log_crash((e, v, t))
         self.root.update_idletasks()
         set_noactivate(self._strip_hwnd())
         set_noactivate(self._panel_hwnd())
@@ -493,6 +505,7 @@ class UsageStrip:
 
     def refresh_data(self) -> None:
         if self._fetch_busy:
+            self._refetch_pending = True  # view changed mid-fetch: redo soon
             return
         if not self.shown and self.usage is not None:
             # Nobody is looking and we hold last-good data: skip the network but
@@ -514,17 +527,18 @@ class UsageStrip:
             except Exception as e:  # noqa: BLE001 - surface any failure in the strip
                 u = {"error": str(e)}
             self._fetch_busy = False
-            self.root.after(0, lambda: self._apply(u))
+            self.root.after(0, lambda: self._apply(u, target))
         threading.Thread(target=worker, daemon=True).start()
 
-    def _apply(self, u: dict) -> None:
+    def _apply(self, u: dict, target: str = "__active__") -> None:
         self.last_fetch = time.time()
         if u.get("error"):
             self._fail_streak += 1
             self._last_error = str(u["error"])
-            if self.usage is not None:
-                self._render_stale()  # keep last-good numbers, marked stale
+            if self.usage is not None and self._usage_target == target:
+                self._render_stale()  # same source: keep last-good numbers, marked stale
             else:
+                # no (or mismatched) cached data for THIS source: honest error
                 self.lbl_pct.config(text="--%", fg=RED)
                 self.lbl_info.config(text="获取失败 " + self._last_error[:24])
                 self.bar_fill.place_forget()
@@ -533,9 +547,14 @@ class UsageStrip:
             self._stale = False
             self._last_error = None
             self.usage = u
+            self._usage_target = target
             self.fetched_at = time.time()
             self._render(u)
-        self.root.after(self._next_refresh_ms(), self.refresh_data)
+        if self._refetch_pending:
+            self._refetch_pending = False
+            self.root.after(50, self.refresh_data)  # a click raced this fetch
+        else:
+            self.root.after(self._next_refresh_ms(), self.refresh_data)
         if self.shown:
             self.root.after_idle(self._sync_position)
 
@@ -753,6 +772,7 @@ class UsageStrip:
 
 # ------------------------------------------------------------------ entry
 def main() -> None:
+    threading.excepthook = lambda a: log_crash((a.exc_type, a.exc_value, a.exc_traceback))
     ppid = None
     instance = None
     for i, a in enumerate(sys.argv):

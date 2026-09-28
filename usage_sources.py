@@ -174,7 +174,8 @@ def fetch_custom_usage(base: str, key: str) -> dict:
     today_cost = None
     du = data.get("daily_usage")
     if isinstance(du, list):
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        # local date, not UTC: "today" should match the user's calendar day
+        today = datetime.now().strftime("%Y-%m-%d")
         for e in du:
             if isinstance(e, dict) and e.get("date") == today and e.get("cost") is not None:
                 today_cost = float(e["cost"])

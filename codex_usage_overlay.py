@@ -42,7 +42,7 @@ TARGET_EXE = "chatgpt.exe"
 TARGET_PATH_MARKER = "\\windowsapps\\openai.codex"
 MIN_W, MIN_H = 400, 300          # ignore tiny/suspended host windows
 
-__version__ = "2.1.2"
+__version__ = "2.1.3"
 
 # Built-in defaults; user-tunable via overlay.toml next to this file (see load_config).
 DEFAULTS = {

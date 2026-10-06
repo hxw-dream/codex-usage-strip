@@ -53,6 +53,7 @@
 ## 代码约定
 - 注释与 docstring 用英文，UI 文案用简体中文；模块顶部 docstring 写行为契约（Contract）。
 - 版本号只在 `codex_usage_overlay.py` 的 `__version__` 维护；发版同步 `docs/poster.html` 面板里的版本字符串并打 tag 发 Release。
+- **每次任务执行完，凡涉及代码/行为/配置变更，须及时同步更新 `PROJECT_STATUS.md`（现状快照）与 `CHANGELOG.md`（版本条目），与变更一并提交。**
 - 数据源按回退链自动降级（`fetch_relay`：one-api → custom-usage → deepseek）。
 - 配置读取：DEFAULTS 内置默认 + LIMITS 逐项夹取；overlay.toml 缺失/损坏静默回默认。
 - 密钥运行时从 `~/.codex/auth.json`、config.toml（experimental_bearer_token / env_key）、环境变量解析，绝不硬编码。

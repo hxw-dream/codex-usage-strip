@@ -43,7 +43,7 @@ TARGET_EXE = "chatgpt.exe"
 TARGET_PATH_MARKER = "\\windowsapps\\openai.codex"
 MIN_W, MIN_H = 400, 300          # ignore tiny/suspended host windows
 
-__version__ = "2.2.3"
+__version__ = "2.2.4"
 
 # Built-in defaults; user-tunable via overlay.toml next to this file (see load_config).
 DEFAULTS = {
@@ -632,6 +632,8 @@ class UsageStrip:
         remain = max(0, 100 - round(p.get("used_percent") or 0))
         color = RED if remain <= 10 else AMBER if remain <= 30 else GREEN
         self.lbl_pct.config(text=f"{remain}%", fg=color)
+        # re-pack with before= restores the track's slot if relay mode hid it
+        self.bar_bg.pack(side="left", padx=(8, 8), pady=2, before=self.lbl_info)
         self.bar_fill.place(x=0, y=0, width=max(2, int(BAR_W * min(100, remain) / 100)))
         self.bar_fill.config(bg=color)
         extra = ""
@@ -654,9 +656,9 @@ class UsageStrip:
         color = GREEN if pct is None else (
             RED if pct <= 10 else AMBER if pct <= 30 else GREEN)
         self.lbl_pct.config(text=f"{cur}{bal:,.2f}", fg=color)
-        width = BAR_W if pct is None else max(2, int(BAR_W * min(100, pct) / 100))
-        self.bar_fill.place(x=0, y=0, width=width)
-        self.bar_fill.config(bg=color)
+        # Relay/DeepSeek billing is balance-based: there is no quota ratio a
+        # bar could represent (most have no total either) — hide the track.
+        self.bar_bg.pack_forget()
         parts = []
         if pct is not None:
             parts.append(f"剩 {pct}%")

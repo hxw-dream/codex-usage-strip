@@ -43,7 +43,7 @@ TARGET_EXE = "chatgpt.exe"
 TARGET_PATH_MARKER = "\\windowsapps\\openai.codex"
 MIN_W, MIN_H = 400, 300          # ignore tiny/suspended host windows
 
-__version__ = "2.2.0"
+__version__ = "2.2.1"
 
 # Built-in defaults; user-tunable via overlay.toml next to this file (see load_config).
 DEFAULTS = {
@@ -358,6 +358,9 @@ class UsageStrip:
         self.bar_bg.pack_propagate(False)
         self.bar_fill = tk.Frame(self.bar_bg, width=0, height=4, bg=GREEN)
         self.bar_fill.place(x=0, y=0)
+        self.lbl_rate = tk.Label(f, text="", font=("Segoe UI", 8, "bold"),
+                                 fg=FG, bg=BG)
+        self.lbl_rate.pack(side="left")
         self.lbl_info = tk.Label(f, text="加载中…", font=("Segoe UI", 8),
                                  fg=FG_DIM, bg=BG)
         self.lbl_info.pack(side="left")
@@ -501,15 +504,21 @@ class UsageStrip:
         except Exception:  # noqa: BLE001 - metrics are decorative, never fatal
             self._metrics = None
 
-    def _rate_suffix(self) -> str:
-        """Compact capsule segment when the last response is fresh."""
+    def _update_metrics_label(self) -> None:
+        """Always-on capsule segment: '25 tok/s · 95%'.
+
+        Rate requires a fresh response (<10 min); cache hit is session
+        cumulative and shows whenever metrics exist."""
         m = self._metrics
-        if not m or m.get("last_rate") is None:
-            return ""
-        age = m.get("age_s")
-        if age is None or age > 600:
-            return ""
-        return f" \u00b7 {m['last_rate']:.0f} tok/s"
+        if not m:
+            self.lbl_rate.config(text="")
+            return
+        parts = []
+        if m.get("last_rate") is not None and (m.get("age_s") is None or m["age_s"] <= 600):
+            parts.append(f"{m['last_rate']:.0f} tok/s")
+        if m.get("cache_hit") is not None:
+            parts.append(f"{m['cache_hit'] * 100:.0f}%")
+        self.lbl_rate.config(text=" \u00b7 ".join(parts))
 
     def _metrics_rows(self) -> list:
         m = self._metrics
@@ -633,7 +642,7 @@ class UsageStrip:
             extra += f" \u00b7 ${u['credits_balance']:.2f}"
         if self.cycling_name:
             extra += f" \u00b7 {self.cycling_name}"
-        extra += self._rate_suffix()
+        self._update_metrics_label()
         self.lbl_info.config(fg=FG_DIM,
                              text=self._reset_text(p) + extra)
 
@@ -657,7 +666,7 @@ class UsageStrip:
             parts.append(f"总额 {cur}{total:,.2f}")
         if u.get("provider"):
             parts.append(u["provider"])
-        parts.append(self._rate_suffix().strip(" \u00b7"))
+        self._update_metrics_label()
         self.lbl_info.config(text=" \u00b7 ".join(p for p in parts if p), fg=FG_DIM)
 
     def _reset_text(self, p: dict) -> str:

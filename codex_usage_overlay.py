@@ -43,7 +43,7 @@ TARGET_EXE = "chatgpt.exe"
 TARGET_PATH_MARKER = "\\windowsapps\\openai.codex"
 MIN_W, MIN_H = 400, 300          # ignore tiny/suspended host windows
 
-__version__ = "2.2.2"
+__version__ = "2.2.3"
 
 # Built-in defaults; user-tunable via overlay.toml next to this file (see load_config).
 DEFAULTS = {
@@ -350,9 +350,6 @@ class UsageStrip:
     def _build_strip(self) -> None:
         f = tk.Frame(self.root, bg=BG, padx=11, pady=6)
         f.pack(padx=1, pady=1)
-        self.lbl_rate = tk.Label(f, text="", font=("Segoe UI", 8, "bold"),
-                                 fg=FG, bg=BG)
-        self.lbl_rate.pack(side="left", padx=(0, 4))
         self.lbl_pct = tk.Label(f, text="--%", font=("Segoe UI", 10, "bold"),
                                 fg=FG_DIM, bg=BG)
         self.lbl_pct.pack(side="left")
@@ -364,6 +361,9 @@ class UsageStrip:
         self.lbl_info = tk.Label(f, text="加载中…", font=("Segoe UI", 8),
                                  fg=FG_DIM, bg=BG)
         self.lbl_info.pack(side="left")
+        self.lbl_rate = tk.Label(f, text="", font=("Segoe UI", 8, "bold"),
+                                 fg=FG, bg=BG)
+        self.lbl_rate.pack(side="left", padx=(4, 0))
 
         self.root.bind("<Button-1>", self._on_click)
         self.root.bind("<Button-3>", self._popup_menu)

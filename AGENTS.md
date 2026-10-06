@@ -44,6 +44,7 @@
 ## 目录结构
 - `codex_usage_overlay.py` — 主程序：UI、Win32 吸附跟随、配置加载、crash.log
 - `usage_sources.py` — 数据层：官方 /usage、one-api、SAIL 式 /v1/usage、DeepSeek、cc-switch 只读
+- `codex_metrics.py` — 模型实时指标：解析 ~/.codex/sessions rollout JSONL（输出速率/缓存命中率/模型名），本地零网络
 - `mcp_usage_server.py` — MCP server（进程级联动 + 文字查询），因 cc-switch 切 provider 会抹掉注册段而停用，仅备用
 - `启动用量悬浮条.bat` — 手动启动入口
 - `overlay.toml` — 用户可调参数（6 项，越界自动夹回 LIMITS 范围）
@@ -64,6 +65,8 @@
 - 吸附目标双重校验：进程名 chatgpt.exe + MSIX 路径含 openai.codex，否则会误吸 ZCode.exe 等窗口；宿主窗口可能是 cloaked 状态，可见性判断要查 DWM 属性 14。
 - Python 升级后需重新复制 pythonw.exe 为 codex-usage.exe。
 - 今日消耗按本地日期匹配（不是 UTC）。
+- rollout JSONL 的 token 账目：`total = input + output`，`input_tokens 已含 cached_input_tokens`（命中率=cached/input）；速率=最近响应 output_tokens ÷（边界事件(用户消息/工具输出/task_started)到 token_count 的时长）；最新 mtime 的文件可能是被恢复的旧线程（无新响应），要按「最新响应时间」多文件择新（`codex_metrics.session_metrics`）。
+- 本会话的 Git Bash 里 tasklist/taskkill 的过滤参数不可靠（过滤丢进程、PID 报"对象不存在"），管理浮条进程用 PowerShell Get-Process/Stop-Process。
 - 探测/控制脚本要与浮条 DPI 感知一致（`SetProcessDpiAwareness(2)`），否则 GetWindowRect/命中测试坐标全错（175% 缩放实测）。
 - 缓存显示必须带来源标记（`_usage_target`）：跨源失败不能把上一源的余额当新源缓存值。
 

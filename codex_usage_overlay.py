@@ -34,6 +34,7 @@ from ctypes import wintypes
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from usage_sources import fetch_usage, fetch_named, ccs_relay_providers  # noqa: E402
+import codex_metrics  # noqa: E402
 
 # ------------------------------------------------------------------ settings
 # Anchor only the OpenAI Codex desktop app: its windows are hosted by
@@ -42,7 +43,7 @@ TARGET_EXE = "chatgpt.exe"
 TARGET_PATH_MARKER = "\\windowsapps\\openai.codex"
 MIN_W, MIN_H = 400, 300          # ignore tiny/suspended host windows
 
-__version__ = "2.1.3"
+__version__ = "2.2.0"
 
 # Built-in defaults; user-tunable via overlay.toml next to this file (see load_config).
 DEFAULTS = {
@@ -303,6 +304,7 @@ class UsageStrip:
         self._fail_streak = 0
         self._stale = False
         self._last_error = None
+        self._metrics = None          # live model metrics (rate / cache hit)
         self._strip_w = self._strip_h = 0
         self._hwnd = None               # strip HWND, cached in _measure (Tk context)
         self._panel_hwnd_cache = None
@@ -478,6 +480,7 @@ class UsageStrip:
                              FG_DIM, False))
             if u.get("credits_balance") is not None:
                 rows.append((f"credits  ${u['credits_balance']:,.2f}", FG_DIM, False))
+        rows.extend(self._metrics_rows())
         if self._stale:
             rows.append(("拉取失败 · 显示缓存值", AMBER, False))
             if self._last_error:
@@ -490,6 +493,42 @@ class UsageStrip:
             tk.Label(self.panel_body, text=txt, bg=BG, fg=color, anchor="w",
                      font=("Segoe UI", 8, "bold") if bold else ("Segoe UI", 8),
                      ).pack(fill="x", pady=(0 if i == 0 else 3))
+
+    # ---- live model metrics (parsed from local session logs)
+    def _refresh_metrics(self) -> None:
+        try:
+            self._metrics = codex_metrics.session_metrics()
+        except Exception:  # noqa: BLE001 - metrics are decorative, never fatal
+            self._metrics = None
+
+    def _rate_suffix(self) -> str:
+        """Compact capsule segment when the last response is fresh."""
+        m = self._metrics
+        if not m or m.get("last_rate") is None:
+            return ""
+        age = m.get("age_s")
+        if age is None or age > 600:
+            return ""
+        return f" \u00b7 {m['last_rate']:.0f} tok/s"
+
+    def _metrics_rows(self) -> list:
+        m = self._metrics
+        if not m:
+            return []
+        rows = []
+        if m.get("last_rate") is not None:
+            age = m.get("age_s")
+            ago = f" \u00b7 {int(age // 60)} 分钟前" if age is not None and age > 90 else ""
+            rows.append((f"输出速率  {m['last_rate']:.0f} tok/s"
+                         f" \u00b7 最近响应 {m.get('last_out_tok') or 0:,} tok"
+                         f" / {m.get('last_dur_s') or 0:.0f}s{ago}", FG, False))
+        if m.get("cache_hit") is not None:
+            rows.append((f"输入缓存命中  {m['cache_hit'] * 100:.0f}%"
+                         f" \u00b7 会话累计 {m['in_tok']:,} tok 中缓存 {m['cached_tok']:,}",
+                         FG, False))
+        if m.get("model"):
+            rows.append((f"模型  {m['model']}", FG_DIM, False))
+        return rows
 
     # ---- data
     def _cycle_list(self) -> list:
@@ -549,6 +588,7 @@ class UsageStrip:
             self.usage = u
             self._usage_target = target
             self.fetched_at = time.time()
+            self._refresh_metrics()
             self._render(u)
         if self._refetch_pending:
             self._refetch_pending = False
@@ -593,6 +633,7 @@ class UsageStrip:
             extra += f" \u00b7 ${u['credits_balance']:.2f}"
         if self.cycling_name:
             extra += f" \u00b7 {self.cycling_name}"
+        extra += self._rate_suffix()
         self.lbl_info.config(fg=FG_DIM,
                              text=self._reset_text(p) + extra)
 
@@ -616,7 +657,8 @@ class UsageStrip:
             parts.append(f"总额 {cur}{total:,.2f}")
         if u.get("provider"):
             parts.append(u["provider"])
-        self.lbl_info.config(text=" \u00b7 ".join(parts), fg=FG_DIM)
+        parts.append(self._rate_suffix().strip(" \u00b7"))
+        self.lbl_info.config(text=" \u00b7 ".join(p for p in parts if p), fg=FG_DIM)
 
     def _reset_text(self, p: dict) -> str:
         secs = max(0, (p.get("reset_after_seconds") or 0) - (time.time() - self.fetched_at))
@@ -628,8 +670,12 @@ class UsageStrip:
     def _countdown_loop(self) -> None:
         try:
             u = self.usage
-            if u and self.shown and not self._stale and u.get("mode") != "relay":
-                self._render_official(u)
+            if u and self.shown and not self._stale:
+                self._refresh_metrics()
+                if u.get("mode") != "relay":
+                    self._render_official(u)
+                elif self._metrics:  # relay: metrics segment may have gone stale
+                    self._render_relay(u)
         except Exception:
             pass
         self.root.after(COUNTDOWN_MS, self._countdown_loop)

@@ -1,6 +1,6 @@
 # 项目状态（PROJECT_STATUS）
 
-> 快照日期：2026-10-07 · 当前版本：**v2.2.4** · 仓库：[hxw-dream/codex-usage-strip](https://github.com/hxw-dream/codex-usage-strip)（PUBLIC, MIT）
+> 快照日期：2026-10-07 · 当前版本：**v2.2.5** · 仓库：[hxw-dream/codex-usage-strip](https://github.com/hxw-dream/codex-usage-strip)（PUBLIC, MIT）
 
 ## 一句话定位
 
@@ -10,9 +10,9 @@
 
 | 项 | 状态 |
 |---|---|
-| 生产实例 | v2.2.4 运行中（pythonw 改名 codex-usage.exe，经 bat/开始菜单启动） |
+| 生产实例 | v2.2.5 运行中（pythonw 改名 codex-usage.exe，经 bat/开始菜单启动） |
 | 远端同步 | main = 本地（`c7bab9c`），工作区干净 |
-| Release | v2.2.0（含 exe，Latest）、v2.1.3、v2.1.2；**v2.2.1~2.2.4 尚未打 Release exe** |
+| Release | v2.2.0（含 exe，Latest）、v2.1.3、v2.1.2；**v2.2.1~2.2.5 尚未打 Release exe** |
 | 生命周期 | 手动启动；最小化/跨虚拟桌面=隐藏等待；窗口关闭=驻留 30 分钟自退（可配） |
 | 数据源 | 激活 provider（config.toml 实时判定，本地代理自动同名回退 CCS）→ 左键循环 CCS 各中转 → 官方（auth.json 存在时） |
 
@@ -29,7 +29,7 @@ codex_usage_overlay.py   主程序：胶囊 UI / Win32 吸附跟随(WinEvent+Set
 
 关键设计约束（红线）：零第三方依赖；绝不写 CCS 数据库/不用其 oauth refresh token；不做常驻/自启；密钥只在运行时解析。
 
-## 胶囊信息布局（v2.2.4 现状）
+## 胶囊信息布局（v2.2.5 现状）
 
 ```
 官方视图：  62% [进度条] 3天4小时后重置 · 周余 58% · $4.50 │ 25 tok/s · 95%（常驻段，最右）

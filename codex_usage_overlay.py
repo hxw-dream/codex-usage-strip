@@ -43,7 +43,7 @@ TARGET_EXE = "chatgpt.exe"
 TARGET_PATH_MARKER = "\\windowsapps\\openai.codex"
 MIN_W, MIN_H = 400, 300          # ignore tiny/suspended host windows
 
-__version__ = "2.2.4"
+__version__ = "2.2.5"
 
 # Built-in defaults; user-tunable via overlay.toml next to this file (see load_config).
 DEFAULTS = {
@@ -350,20 +350,23 @@ class UsageStrip:
     def _build_strip(self) -> None:
         f = tk.Frame(self.root, bg=BG, padx=11, pady=6)
         f.pack(padx=1, pady=1)
+        # anchor="s" bottom-aligns every label so mixed font sizes (10pt bold
+        # number vs 8pt text) share one visual baseline instead of centering
+        # at different heights
         self.lbl_pct = tk.Label(f, text="--%", font=("Segoe UI", 10, "bold"),
                                 fg=FG_DIM, bg=BG)
-        self.lbl_pct.pack(side="left")
+        self.lbl_pct.pack(side="left", anchor="s")
         self.bar_bg = tk.Frame(f, width=BAR_W, height=4, bg=BAR_TRACK)
-        self.bar_bg.pack(side="left", padx=(8, 8), pady=2)
+        self.bar_bg.pack(side="left", padx=(8, 8), pady=(0, 3), anchor="s")
         self.bar_bg.pack_propagate(False)
         self.bar_fill = tk.Frame(self.bar_bg, width=0, height=4, bg=GREEN)
         self.bar_fill.place(x=0, y=0)
         self.lbl_info = tk.Label(f, text="加载中…", font=("Segoe UI", 8),
                                  fg=FG_DIM, bg=BG)
-        self.lbl_info.pack(side="left")
+        self.lbl_info.pack(side="left", anchor="s")
         self.lbl_rate = tk.Label(f, text="", font=("Segoe UI", 8, "bold"),
                                  fg=FG, bg=BG)
-        self.lbl_rate.pack(side="left", padx=(4, 0))
+        self.lbl_rate.pack(side="left", padx=(4, 0), anchor="s")
 
         self.root.bind("<Button-1>", self._on_click)
         self.root.bind("<Button-3>", self._popup_menu)
@@ -633,7 +636,8 @@ class UsageStrip:
         color = RED if remain <= 10 else AMBER if remain <= 30 else GREEN
         self.lbl_pct.config(text=f"{remain}%", fg=color)
         # re-pack with before= restores the track's slot if relay mode hid it
-        self.bar_bg.pack(side="left", padx=(8, 8), pady=2, before=self.lbl_info)
+        self.bar_bg.pack(side="left", padx=(8, 8), pady=(0, 3), anchor="s",
+                         before=self.lbl_info)
         self.bar_fill.place(x=0, y=0, width=max(2, int(BAR_W * min(100, remain) / 100)))
         self.bar_fill.config(bg=color)
         extra = ""

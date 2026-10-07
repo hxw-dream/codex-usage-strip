@@ -12,7 +12,7 @@
 |---|---|
 | 生产实例 | v2.2.5 运行中（pythonw 改名 codex-usage.exe，经 bat/开始菜单启动） |
 | 远端同步 | main = 本地（`c7bab9c`），工作区干净 |
-| Release | v2.2.0（含 exe，Latest）、v2.1.3、v2.1.2；**v2.2.1~2.2.5 尚未打 Release exe** |
+| Release | v2.2.5（含 exe，Latest）、v2.2.0、v2.1.3、v2.1.2 |
 | 生命周期 | 手动启动；最小化/跨虚拟桌面=隐藏等待；窗口关闭=驻留 30 分钟自退（可配） |
 | 数据源 | 激活 provider（config.toml 实时判定，本地代理自动同名回退 CCS）→ 左键循环 CCS 各中转 → 官方（auth.json 存在时） |
 
@@ -57,7 +57,7 @@ codex_usage_overlay.py   主程序：胶囊 UI / Win32 吸附跟随(WinEvent+Set
 
 ## 待办 / 可选方向
 
-- [ ] v2.2.1~2.2.4 打包新 Release exe（流程已固化：bump 版本→同步海报→tag→venv 打包→gh release）
+- [x] v2.2.5 Release 已补发（2026-10-07，exe+源码包）
 - [ ] 可选：命中率口径改「最近 N 次响应」；中转视图去掉「剩 N%」文字段（用户未拍板）
 - [ ] 可选：代码签名消除 SmartScreen（需购证书，用户未表态）
 

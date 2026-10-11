@@ -1,6 +1,6 @@
 # 项目状态（PROJECT_STATUS）
 
-> 快照日期：2026-10-07 · 当前版本：**v2.2.5** · 仓库：[hxw-dream/codex-usage-strip](https://github.com/hxw-dream/codex-usage-strip)（PUBLIC, MIT）
+> 快照日期：2026-10-11 · 当前版本：**v2.2.7** · 仓库：[hxw-dream/codex-usage-strip](https://github.com/hxw-dream/codex-usage-strip)（PUBLIC, MIT）
 
 ## 一句话定位
 
@@ -10,7 +10,7 @@
 
 | 项 | 状态 |
 |---|---|
-| 生产实例 | v2.2.5 运行中（pythonw 改名 codex-usage.exe，经 bat/开始菜单启动） |
+| 生产实例 | v2.2.7 运行中（pythonw 改名 codex-usage.exe，经 bat/开始菜单启动） |
 | 远端同步 | main = 本地（`c7bab9c`），工作区干净 |
 | Release | v2.2.5（含 exe，Latest）、v2.2.0、v2.1.3、v2.1.2 |
 | 生命周期 | 手动启动；最小化/跨虚拟桌面=隐藏等待；窗口关闭=驻留 30 分钟自退（可配） |

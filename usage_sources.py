@@ -19,6 +19,9 @@ Returns a normalized dict; UI branches on the "mode" field:
 
 import json
 import os
+import socket
+import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
@@ -30,9 +33,34 @@ def _codex_home() -> str:
 
 
 def _http_json(url: str, headers: dict, timeout: int = 15) -> dict:
-    req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode("utf-8"))
+    """GET json with one quick retry for transient failures.
+
+    Cloudflare in front of chatgpt.com intermittently 403s bare urllib
+    requests, and the network occasionally resets mid-call; both recover on a
+    second attempt, so retry those before surfacing an error. Errors are
+    re-raised as concise RuntimeError text that fits the strip's error line.
+    """
+    req_headers = dict(headers)
+    req_headers.setdefault("Accept", "application/json")
+    last = None
+    for attempt in (1, 2):
+        try:
+            req = urllib.request.Request(url, headers=req_headers)
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            last = RuntimeError(f"HTTP {e.code}")
+            if e.code not in (403, 429) and not 500 <= e.code < 600:
+                raise last
+        except urllib.error.URLError as e:
+            last = RuntimeError(f"网络不可达({e.reason})")
+        except (socket.timeout, TimeoutError) as e:
+            last = RuntimeError(f"网络超时({e})")
+        except OSError as e:
+            last = RuntimeError(f"网络错误({e})")
+        if attempt == 1:
+            time.sleep(1.5)
+    raise last
 
 
 # ------------------------------------------------------------------ chatgpt
@@ -48,12 +76,17 @@ def fetch_chatgpt() -> dict:
         "Authorization": "Bearer " + token,
         "chatgpt-account-id": tokens.get("account_id") or "",
         "User-Agent": "codex_cli_rs",
+        "originator": "codex_cli_rs",  # the real CLI sends this; reduces CF 403s
     })
 
     rl = data.get("rate_limit") or {}
     primary = rl.get("primary_window") or {}
     secondary = rl.get("secondary_window")
     credits = data.get("credits") or {}
+    try:  # observed in the wild as a string ("4.50") on some accounts
+        credits_balance = float(credits.get("balance"))
+    except (TypeError, ValueError):
+        credits_balance = None
 
     def window(w: dict) -> dict:
         return {
@@ -69,7 +102,7 @@ def fetch_chatgpt() -> dict:
         "limit_reached": rl.get("limit_reached"),
         "primary_window": window(primary) if primary else None,
         "secondary_window": window(secondary) if secondary else None,
-        "credits_balance": credits.get("balance"),
+        "credits_balance": credits_balance,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }
 

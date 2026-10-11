@@ -43,7 +43,7 @@ TARGET_EXE = "chatgpt.exe"
 TARGET_PATH_MARKER = "\\windowsapps\\openai.codex"
 MIN_W, MIN_H = 400, 300          # ignore tiny/suspended host windows
 
-__version__ = "2.2.5"
+__version__ = "2.2.7"
 
 # Built-in defaults; user-tunable via overlay.toml next to this file (see load_config).
 DEFAULTS = {
@@ -601,7 +601,13 @@ class UsageStrip:
             self._usage_target = target
             self.fetched_at = time.time()
             self._refresh_metrics()
-            self._render(u)
+            try:
+                self._render(u)
+            except Exception:  # noqa: BLE001 - a bad payload must not kill polling
+                log_crash()
+                self.lbl_pct.config(text="--%", fg=RED)
+                self.lbl_info.config(text="渲染异常（已记入 crash.log）")
+                self.bar_fill.place_forget()
         if self._refetch_pending:
             self._refetch_pending = False
             self.root.after(50, self.refresh_data)  # a click raced this fetch

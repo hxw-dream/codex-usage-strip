@@ -43,7 +43,7 @@ TARGET_EXE = "chatgpt.exe"
 TARGET_PATH_MARKER = "\\windowsapps\\openai.codex"
 MIN_W, MIN_H = 400, 300          # ignore tiny/suspended host windows
 
-__version__ = "2.2.7"
+__version__ = "2.2.8"
 
 # Built-in defaults; user-tunable via overlay.toml next to this file (see load_config).
 DEFAULTS = {
@@ -357,7 +357,9 @@ class UsageStrip:
                                 fg=FG_DIM, bg=BG)
         self.lbl_pct.pack(side="left", anchor="s")
         self.bar_bg = tk.Frame(f, width=BAR_W, height=4, bg=BAR_TRACK)
-        self.bar_bg.pack(side="left", padx=(8, 8), pady=(0, 3), anchor="s")
+        # no anchor: pack centers the 4px track vertically against the row,
+        # so it reads as centered next to the 10pt number
+        self.bar_bg.pack(side="left", padx=(8, 8))
         self.bar_bg.pack_propagate(False)
         self.bar_fill = tk.Frame(self.bar_bg, width=0, height=4, bg=GREEN)
         self.bar_fill.place(x=0, y=0)
@@ -642,8 +644,7 @@ class UsageStrip:
         color = RED if remain <= 10 else AMBER if remain <= 30 else GREEN
         self.lbl_pct.config(text=f"{remain}%", fg=color)
         # re-pack with before= restores the track's slot if relay mode hid it
-        self.bar_bg.pack(side="left", padx=(8, 8), pady=(0, 3), anchor="s",
-                         before=self.lbl_info)
+        self.bar_bg.pack(side="left", padx=(8, 8), before=self.lbl_info)
         self.bar_fill.place(x=0, y=0, width=max(2, int(BAR_W * min(100, remain) / 100)))
         self.bar_fill.config(bg=color)
         extra = ""

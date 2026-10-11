@@ -43,7 +43,7 @@ TARGET_EXE = "chatgpt.exe"
 TARGET_PATH_MARKER = "\\windowsapps\\openai.codex"
 MIN_W, MIN_H = 400, 300          # ignore tiny/suspended host windows
 
-__version__ = "2.2.8"
+__version__ = "2.2.9"
 
 # Built-in defaults; user-tunable via overlay.toml next to this file (see load_config).
 DEFAULTS = {
@@ -350,12 +350,11 @@ class UsageStrip:
     def _build_strip(self) -> None:
         f = tk.Frame(self.root, bg=BG, padx=11, pady=6)
         f.pack(padx=1, pady=1)
-        # anchor="s" bottom-aligns every label so mixed font sizes (10pt bold
-        # number vs 8pt text) share one visual baseline instead of centering
-        # at different heights
+        # no anchor anywhere: every element (10pt number, 8pt text, 4px bar)
+        # centers on the row's vertical midline — the look the user settled on
         self.lbl_pct = tk.Label(f, text="--%", font=("Segoe UI", 10, "bold"),
                                 fg=FG_DIM, bg=BG)
-        self.lbl_pct.pack(side="left", anchor="s")
+        self.lbl_pct.pack(side="left")
         self.bar_bg = tk.Frame(f, width=BAR_W, height=4, bg=BAR_TRACK)
         # no anchor: pack centers the 4px track vertically against the row,
         # so it reads as centered next to the 10pt number
@@ -365,10 +364,10 @@ class UsageStrip:
         self.bar_fill.place(x=0, y=0)
         self.lbl_info = tk.Label(f, text="加载中…", font=("Segoe UI", 8),
                                  fg=FG_DIM, bg=BG)
-        self.lbl_info.pack(side="left", anchor="s")
+        self.lbl_info.pack(side="left")
         self.lbl_rate = tk.Label(f, text="", font=("Segoe UI", 8, "bold"),
                                  fg=FG, bg=BG)
-        self.lbl_rate.pack(side="left", padx=(4, 0), anchor="s")
+        self.lbl_rate.pack(side="left", padx=(4, 0))
 
         self.root.bind("<Button-1>", self._on_click)
         self.root.bind("<Button-3>", self._popup_menu)
